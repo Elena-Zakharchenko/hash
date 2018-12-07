@@ -1,145 +1,88 @@
 #pragma once
-#ifndef REPOSITORY_H_
-#define REPOSITORY_H_
-#include <string>
-#include <cstdlib>
-#include <list>
-#include "hash.h"
-
-
-struct Book
-{
-	std::string name;
-};
-
-struct box
-{
-	std::string hash = "";
-	std::list<Book> Box;
-};
+#include<iostream>
+#include<list>
+#include<string>
+#include<fstream> // для работы с файлами
+#include"Box.h"
+#include"hash.h"
 
 struct Repository
 {
-	box repository[2756];
-
-	void createHash();
-	void readfile();
-	int findBox(std::string nameofbook);
+	std::list<Box>* repository = new std::list<Box>[1000000];
+	void insert(std::string nameofbook);
+	void destroy(std::string nameofbook);
+	void find(std::string nameofbook);
+	void readfile(std::string filename);
 };
 
 
-
-void Repository::createHash()
+void Repository::insert(std::string nameofbook)
 {
-
-	std::string tmp_char_1;
-	std::string tmp_char_2;
-	std::string tmp_hash_1 = "";
-	std::string tmp_hash_2 = "";
-
-	for (int i = 0; i < 52; i++)
+	std::string tmp_str = "";
+	for (int i = 0; i < 4; i++)
 	{
-		if (i < 26)
-		{
-			tmp_char_1 = (char)(65 + i);
-		}
-		else
-		{
-
-			tmp_char_1 = (char)(71 + i);
-		}
-
-		tmp_hash_1 = generetichash(tmp_char_1);
-
-		for (int j = 0; j < 53; j++)
-		{
-
-			if (j < 26)
-			{
-				tmp_char_2 = (char)(65 + j);
-			}
-			else if (j == 53)
-			{
-				tmp_char_2 = (char)(32);
-
-
-			}
-			else
-			{
-
-				tmp_char_2 = (char)(71 + j);
-			}
-			tmp_hash_2 = generetichash(tmp_char_2);
-
-			repository[52 * i + j].hash = tmp_hash_1 + tmp_hash_2;
-
-		}
-
+		tmp_str += nameofbook[i];
 	}
+	int index = (int)abs(generetichash(tmp_str)/1000);
+	std::cout << index << std::endl;
+	int hash = generetichash(nameofbook);
+	Box book(nameofbook);
+	repository[index].push_back(book);
+}
 
+void Repository::destroy(std::string nameofbook)
+{
+	std::string tmp_str = "";
+	for (int i = 0; i < 4; i++)
+	{
+		tmp_str += nameofbook[i];
+	}
+	int index = (int)abs(generetichash(tmp_str) / 1000);
+	int hash = generetichash(nameofbook);
+	std::list<Box>::iterator it;
+	for (it = repository[index].begin(); it != repository[index].end(); it++)
+	{
+		if (hash == (*it).hash) //(*it) - разименовали итератор и уже работаем с книгой
+		{
+			repository[index].erase(it);
+			break;
+		}
+	}
+}
+
+void Repository::find(std::string nameofbook)
+{
+	std::string tmp_str = "";
+	for (int i = 0; i < 4; i++)
+	{
+		tmp_str += nameofbook[i];
+	}
+	int index = (int)abs(generetichash(tmp_str) / 1000);
+	int hash = generetichash(nameofbook);
+	std::list<Box>::iterator it;
+	for (it = repository[index].begin(); it != repository[index].end(); it++)
+	{
+		if (hash == (*it).hash) //(*it) - разименовали итератор и уже работаем с книгой
+		{
+			std::cout << "We have this book" << std::endl;
+			break; // (*it) - сама книга, &(*it) - ссылка на книгу
+		}
+	}
 }
 
 
-void Repository::readfile()
+void Repository::readfile(std::string filename)
 {
-
-
-	std::string filename = "listofbooks";
-
-	std::ifstream db(filename);
-	std::string tmp_str;
-	std::string tmp_hash;
-	std::string hash;
-
-	while (db)
+	std::ifstream tmp_file(filename); //tmp_file промежуточный объект
+	std::string tmp_str = "";
+	while (tmp_file)
 	{
-
 		std::string str;
-		std::getline(db, str);
-
+		std::getline(tmp_file, str);
 		if (str != "")
 		{
-
-			tmp_str += str[0];
-			tmp_str += str[1];
-			tmp_hash = generetichash(tmp_str);
-			tmp_str = "";
-			hash = generetichash(str);
-			for (int i = 0; i < 2704; i++)
-			{
-				if (tmp_hash == repository[i].hash)
-				{
-					Book new_book;
-					new_book.name = str;
-					repository[i].Box.push_back(new_book);
-					break;
-				}
-
-			}
-
+			Repository::insert(str);
 		}
 
 	}
-
 }
-
-int Repository::findBox(std::string nameofbook)
-{
-	std::string tmp_hashofbook = "";
-	tmp_hashofbook += nameofbook[0];
-	tmp_hashofbook += nameofbook[1];
-	tmp_hashofbook = generetichash(tmp_hashofbook);
-	int index = -1;
-	for (int i = 0; i < 2756; i++)
-	{
-		if (tmp_hashofbook == repository[i].hash)
-		{
-			index = i;
-			return index;
-		}
-
-	}
-
-}
-
-#endif
